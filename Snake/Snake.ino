@@ -8,6 +8,7 @@ int dataPin = 7;
 
 int rightPuller = 8;
 int leftPuller = 9;
+
 int right = 11;
 int left = 12;
 
@@ -26,7 +27,7 @@ byte mapa[][8]= {{0,0,0,0,0,0,0,0},
                 {0,0,0,0,0,0,0,0}};
 byte snake[80];
 byte length = 3;
-byte dir = B00001000;
+volatile byte dir = B00001000;
 //8 up
 //4 left
 //2 down
@@ -38,7 +39,8 @@ void setup() {
   Serial.begin(9600);
   
   pinMode(left,INPUT);
-  pinMode(right, INPUT);
+  pinMode(right,INPUT);
+ 
   pinMode(rightPuller,OUTPUT);
   pinMode(leftPuller, OUTPUT);
   digitalWrite(rightPuller,HIGH);
@@ -61,7 +63,6 @@ void setup() {
   snake[0] = 67;
   snake[1] = 59;
   snake[2] = 51;
-  
 }
 
 void loop() {  
@@ -69,25 +70,25 @@ void loop() {
     display_cycle();
   }
   if (!passed){
-    byte leftInput = !digitalRead(left);  
-    byte rightInput = !digitalRead(right);
-    director = (rightInput << 1 ) | leftInput;
+    director = (digitalRead(left)?0:1)<<1 | (digitalRead(right)?0:1);
     if (director > 0){
-      passed = true;  
+      passed = true; 
     }
-  }else if ((!digitalRead(left) | !digitalRead(right)) == 0){
+  }else if (digitalRead(left) & digitalRead(right)){
     passed = false;
-    if ((director & 2) == 1){
-      if (dir == 1){
-        dir = B00001000;
+    if (director & 2){
+      Serial.println("Passing through leftInt");
+      if (dir == 8){
+        dir = 1; 
       }else{
-        dir = dir >> 1;  
+        dir = dir << 1; 
       }
     }else{
-      if (dir == 8){
-        dir = 1;
+      Serial.println("Passing through rightInt");
+      if (dir == 1){
+        dir = B00001000; 
       }else{
-        dir = dir << 1;  
+        dir = dir >> 1; 
       }
     }
   }
@@ -130,6 +131,9 @@ void updateSnake(){
     snake[i] = (byte)snake[i+1]; 
   }
   byte next = pick_direction();
+  Serial.print("La direccion es ");
+  Serial.println(dir);
+  
   if (mapa[next/8][next%8] == 2){
     snake[length] = next;
     mapa[next/8][next%8] = 1;
@@ -152,21 +156,21 @@ byte pick_direction(){
     }
   }
   else if (dir & 4){
-    if((snake[length-1]+1)/8 == 7){
+    if((snake[length-1]+1)%8 == 7){
       return snake[length-1] - 7;  
     }else{
       return snake[length-1] + 1;
     }
   }
   else if (dir & 2){
-    if((snake[length-1])%8 == 0){
+    if((snake[length-1])/8 == 9){
       return snake[length-1] - 72;  
     }else{
       return snake[length-1] + 8;
     }
   }
   else if (dir & 1){
-    if((snake[length-1])/8 == 0){
+    if((snake[length-1])%8 == 0){
       return snake[length-1] + 7;  
     }else{
       return snake[length-1] - 1;
@@ -183,7 +187,7 @@ void printSnake(){
 }
 
 void lost(){
-  Serial.println("You have loose");
+  Serial.println("You have lost");
   digitalWrite(latchPin, LOW);
   shiftOut(dataPin,clk74595,LSBFIRST,B11111111);
   digitalWrite(latchPin,HIGH);
@@ -202,3 +206,4 @@ void lost(){
     digitalWrite(clk4017, HIGH);
   }
 }
+

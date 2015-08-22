@@ -1,27 +1,44 @@
 
+int clk4017 = 3;
+int rst4017 = 4;
 
-int left = 11;
-int right = 12;
-int puller = 10;
+int clk74595 = 6;
+int latchPin =7;
+int dataPin = 8;
 
-void setup(){
- 
- Serial.begin(9600); 
+int wait = 3;
+
+int cara[]= {66,
+             231,
+             66,
+             0,
+             24,
+             24,
+             129,
+             129,
+             66,
+             60};
+
+void setup() {       
+  pinMode(clk4017, OUTPUT);
+  pinMode(rst4017, OUTPUT);
   
- //pinMode(left,INPUT);
- pinMode(right,INPUT);
- pinMode(puller,OUTPUT);
- 
- digitalWrite(puller, HIGH);
+  pinMode(clk74595, OUTPUT);
+  pinMode(latchPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+  
+  pinMode(13, OUTPUT);
+  digitalWrite(13, LOW);
+  
 }
 
-void loop(){
-  //int l = digitalRead(left);
-  int r = digitalRead(right);
-
-  //Serial.print("El valor de la izquierda es: ");
-  //Serial.println(l);
-  Serial.print(", El valor de la deracha es: "); 
-  Serial.println(r);
-  delay(1000);
+void loop() {
+  for (int i = 0; i<10 ; i++){
+    digitalWrite(latchPin, LOW);
+    shiftOut(dataPin,clk74595,MSBFIRST,cara[i]);
+    digitalWrite(latchPin,HIGH);
+    digitalWrite(clk4017, LOW);
+    delay(wait);
+    digitalWrite(clk4017, HIGH); 
+  } 
 }
